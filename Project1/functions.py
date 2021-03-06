@@ -1,11 +1,11 @@
-import csv, os
+import csv, os, getpass
 
 #this allows the use of the csv and txt files on other computers. it reads from this folder instead of the directory
 THIS_FOLDER = os.path.dirname(os.path.abspath(__file__))
-csv_file = os.path.join(THIS_FOLDER, 'account_list.csv')
-txt1_file = os.path.join(THIS_FOLDER, 'input1.txt')
-txt2_file = os.path.join(THIS_FOLDER, 'input2.txt')
-txt3_file = os.path.join(THIS_FOLDER, 'input3.txt')
+account_file = os.path.join(THIS_FOLDER, 'account_list.csv')
+deposit_file = os.path.join(THIS_FOLDER, 'deposit.txt')
+withdraw_file = os.path.join(THIS_FOLDER, 'withdraw.txt')
+balance_file = os.path.join(THIS_FOLDER, 'balance.txt')
 txt4_file = os.path.join(THIS_FOLDER, 'input4.txt')
 
 balance = 0 #the balance you start with
@@ -16,21 +16,23 @@ def banner():
     print('* '*16)
 
 def login_screen():
-    print('1. Login')
-    print('2. Create an account')
-    print('3. Exit')
+    print('='*30)
+    print('| 1. Login                   |')
+    print('| 2. Create an account       |')
+    print('| 3. Exit                    |')
+    print('='*30)
 
 #reads the csv file and if input is not found, it repeats the loop
 def login(): 
     login = False
     while login == False:
-        with open(csv_file, 'r') as file:
+        with open(account_file, 'r') as file:
             reader = csv.reader(file)
-            username = input('Enter user name: ')
+            username = input('Enter Username: ')
             pin = input('Enter PIN: ')
 
-            for row in reader: #reads the username in the first row and the pin in the second row of the csv file
-                if username == row[0] and pin == row[1]:
+            for col in reader: #reads the username in the first column and the pin in the second column of the csv file
+                if username == col[0] and pin == col[1]:
                     print('Login successful!')
                     login = True
                     break
@@ -40,40 +42,66 @@ def login():
 
 #writes a row in the csv file for future login
 def create_account():
-    with open(csv_file, 'w') as file:
+    with open(account_file, 'w') as file:
         writer = csv.writer(file)
-        writer.writerow([input('Enter your new user name: '), input('Enter your new PIN: ')])
+        writer.writerow([input('Enter your new Username: '), input('Enter your new PIN: ')])
+        print('Account succesfully created!')
 
 #what the user should see after a successful login screen
 def options():
-    print()
-    print('Please choose from the following options:')
-    print('1. Withdraw')
-    print('2. Deposit')
-    print('3. Check balance')
-    print('4. Previous transaction')
-    print('5. Exit')
+    with open(account_file, 'r') as file: #similar to the login function, it reads the first column of the csv file which is the username
+        reader = csv.reader(file)
+        for col in reader:
+            print(f'\nHello, {col[0].title()}. What would you like to do today?') #capitalizes the username for better aesthetics
+            break
+    print('='*30)
+    print('| 1. Withdraw                |')
+    print('| 2. Deposit                 |')
+    print('| 3. Check balance           |')
+    print('| 4. Transaction history     |')
+    print('| 5. Exit                    |')
+    print('='*30)
 
 #takes the amount from the balance if there is any, otherwise print insufficient
 def withdraw():
-    global balance #allows the use of balance from outside the function in line 4
+    global balance #allows the use of the balance variable from outside the function in line 11
     amount = float(input('Enter amount to withdraw: '))
-
     if amount > balance:
         print("You have insufficient funds.")
     else:
         balance -= amount 
         print(f'You withdrew {amount:.2f} SR from your account.')
 
+        with open(withdraw_file, 'a', newline = '') as file: #writes the amount you withdrew to the txt file
+            writer = csv.writer(file)
+            writer.writerow([amount])
+
 #adds amount to the balance
 def deposit():
-    global balance 
+    global balance
     amount = float(input('Enter amount to deposit: '))
     balance += amount 
     print(f'You deposited {amount:.2f} SR into your account.')
 
+    with open(deposit_file, 'a', newline = '') as file: #writes the amount you deposited to the txt file
+        writer = csv.writer(file)
+        writer.writerow([amount])
+                 
 def current_balance():
-    print(f'Your balance is {balance:.2f} SR.')
+    with open(balance_file, 'w') as file:
+        writer = csv.writer(file)
+        writer.writerow([balance])
+        print(f'Your balance is {balance:.2f} SR.')
 
-#def previous_transaction():  <--- work in progress
+def transaction_history():
+    with open(withdraw_file, 'r') as file: #reads and prints the withdraw.txt file
+        print('-'*19)
+        print('Withdrawal history:')
+        print('-'*19)
+        print(file.read())
 
+    with open(deposit_file, 'r') as file: #reads and prints the deposit.txt file
+        print('-'*16)
+        print('Deposit History:')
+        print('-'*16)
+        print(file.read())
